@@ -1,5 +1,5 @@
 /**
- * Canvas Exporter for HH Goa 2026 Format B Lanyard Builder ID Pass (1080x1350)
+ * Canvas Exporter for HH Goa 2026 Format B Builder ID Pass (1080x1350)
  * Renders all brand assets with high precision onto offscreen HTML5 Canvas:
  * - Goa Beach Sunrise background scene (sunrise.png)
  * - Hacker House logo + Pink Goa Hindi text overlay
@@ -7,7 +7,6 @@
  * - Directional wooden signpost (BUILD, SHIP, LAUNCH, REPEAT)
  * - Bottom table laptop scene (agenda.png)
  * - Palm trees & bougainvillea flowers graphics (footer-trees.png)
- * - Woven lanyard strap & metallic clip
  * - Translucent glossy badge sleeve with top punch hole
  * - Deep Jungle Green insert card with centered photo, NAME, BUILDER TITLE, ROLE, and APPROVED stamp
  */
@@ -19,12 +18,130 @@ const CARD_WIDTH = 1080;
 const CARD_HEIGHT = 1350;
 
 export async function exportBuilderCard(userData, templateId) {
+  // Try pixel-perfect DOM capture with html2canvas if available (preferred)
+  try {
+    const pkg = 'html2canvas';
+    const html2canvas = await import(/* @vite-ignore */ pkg);
+    if (html2canvas && typeof document !== 'undefined') {
+      const node = document.getElementById('export-card');
+      if (node) {
+        // Temporarily disable layout transforms, transitions and animations
+        // so html2canvas captures a straight-on, stable preview.
+        const prevStyles = new Map();
+        try {
+          const elems = node.querySelectorAll('*');
+          elems.forEach((el) => {
+            prevStyles.set(el, {
+              transform: el.style.transform,
+              transition: el.style.transition,
+              animation: el.style.animation,
+            });
+            el.style.transform = 'none';
+            el.style.transition = 'none';
+            el.style.animation = 'none';
+          });
+          node.style.transform = 'none';
+
+          const scaleOption = (typeof window !== 'undefined' && window.devicePixelRatio) ? Math.max(1, Math.floor(window.devicePixelRatio)) : 2;
+          const canvas = await html2canvas.default(node, { scale: scaleOption, backgroundColor: null, useCORS: true, allowTaint: false });
+
+          const blob = await new Promise((res) => canvas.toBlob((b) => res(b), 'image/png'));
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `hh-goa-2026-builder-id-${userData.name?.replace(/\s+/g, '-').toLowerCase() || 'card'}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          // restore styles
+          prevStyles.forEach((vals, el) => {
+            el.style.transform = vals.transform || '';
+            el.style.transition = vals.transition || '';
+            el.style.animation = vals.animation || '';
+          });
+
+          return;
+        } catch (err) {
+          // restore styles on error then rethrow to fall back
+          prevStyles.forEach((vals, el) => {
+            el.style.transform = vals.transform || '';
+            el.style.transition = vals.transition || '';
+            el.style.animation = vals.animation || '';
+          });
+          throw err;
+        }
+      }
+    }
+  } catch (err) {
+    // html2canvas not available or failed — fall back to canvas renderer below
+    console.warn('html2canvas not available, falling back to programmatic canvas exporter. To enable pixel-perfect exports, run: npm install html2canvas');
+  }
+
+  // Fallback: existing programmatic canvas renderer (keeps working if html2canvas unavailable)
   const canvas = document.createElement('canvas');
   canvas.width = CARD_WIDTH;
   canvas.height = CARD_HEIGHT;
   const ctx = canvas.getContext('2d');
+  // Improve exported image rendering quality
+  if (ctx) {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+  }
 
   const template = getTemplate(templateId);
+
+  // Try to read layout from the live DOM preview (if present) so fallback renderer
+  // matches the on-screen preview pixel-for-pixel. We look for the #export-card node
+  // and compute a scale factor to map DOM pixels -> canvas pixels.
+  let domRects = null;
+  try {
+    const node = document.getElementById('export-card');
+    if (node) {
+      const nodeRect = node.getBoundingClientRect();
+      const scale = CARD_WIDTH / nodeRect.width;
+
+      const photoImgEl = node.querySelector(`img[src="${userData.photoUrl}"]`);
+      const detailsImgEl = node.querySelector('img[src="/assets/details.png"]');
+      const agendaEl = node.querySelector('img[src="/assets/agenda.png"]');
+
+      domRects = { scale };
+
+      if (photoImgEl) {
+        const r = photoImgEl.getBoundingClientRect();
+        domRects.photo = {
+          x: Math.round((r.left - nodeRect.left) * scale),
+          y: Math.round((r.top - nodeRect.top) * scale),
+          w: Math.round(r.width * scale),
+          h: Math.round(r.height * scale),
+        };
+      }
+
+      if (detailsImgEl) {
+        const r = detailsImgEl.getBoundingClientRect();
+        domRects.details = {
+          x: Math.round((r.left - nodeRect.left) * scale),
+          y: Math.round((r.top - nodeRect.top) * scale),
+          w: Math.round(r.width * scale),
+          h: Math.round(r.height * scale),
+        };
+      }
+
+      if (agendaEl) {
+        const r = agendaEl.getBoundingClientRect();
+        domRects.agenda = {
+          x: Math.round((r.left - nodeRect.left) * scale),
+          y: Math.round((r.top - nodeRect.top) * scale),
+          w: Math.round(r.width * scale),
+          h: Math.round(r.height * scale),
+        };
+      }
+    }
+  } catch (err) {
+    // ignore DOM inspection errors in non-browser or server environments
+    domRects = null;
+  }
 
   // Load all required image assets
   const [photoImg, bgImg, logoImg, hindiImg, agendaImg, patternImg, treesImg, detailsImg] = await Promise.all([
@@ -69,7 +186,7 @@ export async function exportBuilderCard(userData, templateId) {
   }
 
   // 6. Integrated Card Content Pass (Side-by-side Photo Left, Details Right)
-  drawPlasticSleeveAndCard(ctx, photoImg, userData, template, treesImg, patternImg, detailsImg);
+  drawPlasticSleeveAndCard(ctx, photoImg, userData, template, treesImg, patternImg, detailsImg, domRects);
 
   // Export PNG
   canvas.toBlob((blob) => {
@@ -157,33 +274,41 @@ function drawSignpost(ctx) {
   });
 }
 
-function drawPlasticSleeveAndCard(ctx, photoImg, userData, template, treesImg, patternImg, detailsImg) {
-  // Main Card Center Content (Side-by-Side Pass Content)
-  const contentW = 960;
-  const contentH = 820;
-  const contentX = (CARD_WIDTH - contentW) / 2;
-  const contentY = 180;
+function drawPlasticSleeveAndCard(ctx, photoImg, userData, template, treesImg, patternImg, detailsImg, domRects = null) {
+  // Main Card Center Content (Side-by-side Photo Left, Details Right)
+  const contentW = Math.round(CARD_WIDTH * 0.8889); // 960 / 1080
+  const contentH = Math.round(CARD_HEIGHT * 0.6074); // 820 / 1350
+  const contentX = Math.round((CARD_WIDTH - contentW) / 2);
+  const contentY = Math.round(CARD_HEIGHT * 0.1333); // ~180px
 
   // Draw Palm Trees Asset inside card backdrop
   if (treesImg) {
     ctx.save();
     ctx.globalAlpha = 0.35;
-    ctx.drawImage(treesImg, contentX - 50, contentY + contentH - 280, 300, 320);
+    ctx.drawImage(treesImg, contentX - Math.round(CARD_WIDTH * 0.0463), contentY + contentH - Math.round(CARD_HEIGHT * 0.2074), Math.round(CARD_WIDTH * 0.2778), Math.round(CARD_HEIGHT * 0.2370));
     // Mirror on right
-    ctx.translate(contentX + contentW + 50, contentY + contentH - 280);
+    ctx.translate(contentX + contentW + Math.round(CARD_WIDTH * 0.0463), contentY + contentH - Math.round(CARD_HEIGHT * 0.2074));
     ctx.scale(-1, 1);
-    ctx.drawImage(treesImg, 0, 0, 300, 320);
+    ctx.drawImage(treesImg, 0, 0, Math.round(CARD_WIDTH * 0.2778), Math.round(CARD_HEIGHT * 0.2370));
     ctx.restore();
   }
 
   // Left Column: Larger User Photo Frame
-  const photoW = 440;
-  const photoH = 580;
-  const photoX = contentX + 20;
-  const photoY = contentY + 40;
+  let photoW = Math.round(CARD_WIDTH * 0.4074);
+  let photoH = Math.round(CARD_HEIGHT * 0.4296);
+  let photoX = contentX + Math.round(CARD_WIDTH * 0.0185);
+  let photoY = contentY + Math.round(CARD_HEIGHT * 0.0296);
+  const photoR = Math.round(Math.max(16, CARD_WIDTH * 0.022));
+
+  if (domRects && domRects.photo) {
+    photoX = domRects.photo.x;
+    photoY = domRects.photo.y;
+    photoW = domRects.photo.w;
+    photoH = domRects.photo.h;
+  }
 
   ctx.save();
-  roundRect(ctx, photoX, photoY, photoW, photoH, 24);
+  roundRect(ctx, photoX, photoY, photoW, photoH, photoR);
   ctx.clip();
 
   if (photoImg) {
@@ -200,41 +325,45 @@ function drawPlasticSleeveAndCard(ctx, photoImg, userData, template, treesImg, p
   ctx.restore();
 
   // Photo Frame Border
-  ctx.lineWidth = 5;
+  ctx.lineWidth = Math.max(3, Math.round(CARD_WIDTH * 0.0046));
   ctx.strokeStyle = '#167A4A';
-  roundRect(ctx, photoX, photoY, photoW, photoH, 24);
+  roundRect(ctx, photoX, photoY, photoW, photoH, photoR);
   ctx.stroke();
 
   // Right Column: Details Table Area
-  const rightX = photoX + photoW + 35;
+  const rightX = photoX + photoW + Math.round(CARD_WIDTH * 0.0324);
   const rightY = photoY;
-  const tableW = 440;
+  const tableW = Math.round(CARD_WIDTH * 0.4074);
 
   // Draw details.png graphic overlay on right side if available
   if (detailsImg) {
     ctx.save();
     ctx.globalAlpha = 0.35;
-    ctx.drawImage(detailsImg, rightX + 40, rightY - 20, 380, 320);
+    if (domRects && domRects.details) {
+      ctx.drawImage(detailsImg, domRects.details.x, domRects.details.y, domRects.details.w, domRects.details.h);
+    } else {
+      ctx.drawImage(detailsImg, rightX + Math.round(CARD_WIDTH * 0.0370), rightY - Math.round(CARD_HEIGHT * 0.0148), Math.round(CARD_WIDTH * 0.3519), Math.round(CARD_HEIGHT * 0.2370));
+    }
     ctx.restore();
   }
 
   // Table Container Box
   ctx.fillStyle = 'rgba(4, 15, 11, 0.88)';
-  roundRect(ctx, rightX, rightY, tableW, 440, 20);
+  roundRect(ctx, rightX, rightY, tableW, Math.round(CARD_HEIGHT * 0.3259), Math.round(CARD_WIDTH * 0.0185));
   ctx.fill();
-  ctx.lineWidth = 3;
+  ctx.lineWidth = Math.max(2, Math.round(CARD_WIDTH * 0.0028));
   ctx.strokeStyle = 'rgba(22, 122, 74, 0.6)';
-  roundRect(ctx, rightX, rightY, tableW, 440, 20);
+  roundRect(ctx, rightX, rightY, tableW, Math.round(CARD_HEIGHT * 0.3259), Math.round(CARD_WIDTH * 0.0185));
   ctx.stroke();
 
   // Divider lines inside table box
   ctx.strokeStyle = 'rgba(22, 122, 74, 0.4)';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = Math.max(1, Math.round(CARD_WIDTH * 0.0019));
   ctx.beginPath();
-  ctx.moveTo(rightX + 20, rightY + 140);
-  ctx.lineTo(rightX + tableW - 20, rightY + 140);
-  ctx.moveTo(rightX + 20, rightY + 280);
-  ctx.lineTo(rightX + tableW - 20, rightY + 280);
+  ctx.moveTo(rightX + Math.round(CARD_WIDTH * 0.0231), rightY + Math.round(CARD_HEIGHT * 0.1037));
+  ctx.lineTo(rightX + tableW - Math.round(CARD_WIDTH * 0.0231), rightY + Math.round(CARD_HEIGHT * 0.1037));
+  ctx.moveTo(rightX + Math.round(CARD_WIDTH * 0.0231), rightY + Math.round(CARD_HEIGHT * 0.2074));
+  ctx.lineTo(rightX + tableW - Math.round(CARD_WIDTH * 0.0231), rightY + Math.round(CARD_HEIGHT * 0.2074));
   ctx.stroke();
 
   const name = (userData.name || 'RAVI KISHAN').toUpperCase();
@@ -244,32 +373,32 @@ function drawPlasticSleeveAndCard(ctx, photoImg, userData, template, treesImg, p
   // 1. BUILDER NAME
   ctx.fillStyle = 'rgba(167, 255, 79, 0.9)';
   ctx.font = "800 16px 'JetBrains Mono', monospace";
-  ctx.fillText('BUILDER NAME', rightX + 25, rightY + 45);
+  ctx.fillText('BUILDER NAME', rightX + Math.round(CARD_WIDTH * 0.0231), rightY + Math.round(CARD_HEIGHT * 0.0333));
 
   ctx.fillStyle = '#FFFFFF';
   ctx.font = "900 32px 'Space Grotesk', sans-serif";
-  ctx.fillText(name, rightX + 25, rightY + 95);
+  ctx.fillText(name, rightX + Math.round(CARD_WIDTH * 0.0231), rightY + Math.round(CARD_HEIGHT * 0.0704));
 
   // 2. BUILDER TITLE
   ctx.fillStyle = 'rgba(167, 255, 79, 0.9)';
   ctx.font = "800 16px 'JetBrains Mono', monospace";
-  ctx.fillText('BUILDER TITLE', rightX + 25, rightY + 185);
+  ctx.fillText('BUILDER TITLE', rightX + Math.round(CARD_WIDTH * 0.0231), rightY + Math.round(CARD_HEIGHT * 0.1370));
 
   ctx.fillStyle = '#FEE101';
   ctx.font = "900 30px 'Space Grotesk', sans-serif";
-  ctx.fillText(title, rightX + 25, rightY + 235);
+  ctx.fillText(title, rightX + Math.round(CARD_WIDTH * 0.0231), rightY + Math.round(CARD_HEIGHT * 0.1704));
 
   // 3. STACK / ROLE
   ctx.fillStyle = 'rgba(167, 255, 79, 0.9)';
   ctx.font = "800 16px 'JetBrains Mono', monospace";
-  ctx.fillText('STACK / ROLE', rightX + 25, rightY + 325);
+  ctx.fillText('STACK / ROLE', rightX + Math.round(CARD_WIDTH * 0.0231), rightY + Math.round(CARD_HEIGHT * 0.2407));
 
   ctx.fillStyle = '#A7FF4F';
   ctx.font = "800 24px 'JetBrains Mono', monospace";
-  ctx.fillText(stack, rightX + 25, rightY + 375);
+  ctx.fillText(stack, rightX + Math.round(CARD_WIDTH * 0.0231), rightY + Math.round(CARD_HEIGHT * 0.2778));
 
   // APPROVED Rubber Stamp Badge (Bottom Right below table)
-  drawApprovedRubberStamp(ctx, rightX + 20, rightY + 470);
+  drawApprovedRubberStamp(ctx, rightX + Math.round(CARD_WIDTH * 0.0185), rightY + Math.round(CARD_HEIGHT * 0.3481));
 }
 
 function drawApprovedRubberStamp(ctx, x, y) {

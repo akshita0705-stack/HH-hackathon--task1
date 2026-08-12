@@ -1,5 +1,5 @@
-// Lanyard Pass Template Registry
-// Customizes background hues, badge insert cards, lanyard straps & rubber stamps
+// Builder Pass Template Registry
+// Customizes background hues, badge insert cards & rubber stamps
 
 const templates = [
   {

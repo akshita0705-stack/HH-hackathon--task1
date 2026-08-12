@@ -11,8 +11,36 @@ export default function PhotoUploader({ onPhotoSelected, currentPhoto }) {
       alert('Please upload a JPG, PNG, or HEIC image.');
       return;
     }
-    const url = URL.createObjectURL(file);
-    onPhotoSelected(url);
+    // Try to preserve EXIF orientation by using blueimp-load-image if available.
+    (async () => {
+      try {
+        // Import the browser build entry so Vite can resolve it during dev.
+        const pkg = await import(/* @vite-ignore */ 'blueimp-load-image/js/load-image');
+        const loadImage = pkg && (pkg.default || pkg.loadImage || pkg);
+        if (typeof loadImage === 'function') {
+          loadImage(file, (canvasOrImg, meta) => {
+            try {
+              if (canvasOrImg && canvasOrImg.toDataURL) {
+                const dataUrl = canvasOrImg.toDataURL('image/png');
+                onPhotoSelected(dataUrl);
+                return;
+              }
+            } catch (e) {
+              // fall back to object URL below
+            }
+            // fallback
+            const url = URL.createObjectURL(file);
+            onPhotoSelected(url);
+          }, { canvas: true, orientation: true, maxWidth: 2500 });
+          return;
+        }
+      } catch (err) {
+        // library not installed or failed, fall back
+      }
+
+      const url = URL.createObjectURL(file);
+      onPhotoSelected(url);
+    })();
   };
 
   const handleDrop = (e) => {
