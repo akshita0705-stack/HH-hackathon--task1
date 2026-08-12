@@ -1,0 +1,400 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Sora:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-jungle-950: #040F0B;
+  --color-jungle-900: #071A14;
+  --color-jungle-800: #0B2A1F;
+  --color-jungle-700: #0E4630;
+  --color-emerald-600: #167A4A;
+  --color-emerald-500: #32C766;
+
+  --color-lime-400: #A7FF4F;
+  --color-lime-300: #D5FF70;
+
+  --color-sunset-orange: #FF6B4A;
+  --color-sunset-amber: #FFB84D;
+  --color-coral-pink: #FF0080;
+
+  --color-cream: #FFF8E7;
+
+  --font-display: 'Sora', 'Space Grotesk', system-ui, sans-serif;
+  --font-heading: 'Space Grotesk', 'Sora', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --animate-glow-pulse: glow-pulse 6s ease-in-out infinite;
+  --animate-holo-shimmer: holo-shimmer 8s linear infinite;
+  --animate-scanline: scanline 8s linear infinite;
+}
+
+/* ========== BASE RESET & TYPOGRAPHY ========== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #071A14;
+  color: #E0F0E4;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+::selection {
+  background: #FF0080;
+  color: #FEE101;
+}
+
+/* ========== REQUESTED BORDER STRIP (019-group-59467-54-3485-1.svg REPEATING) ========== */
+
+.goa-floral-strip {
+  background-image: url('/assets/019-group-59467-54-3485-1.svg');
+  background-repeat: repeat-x;
+  background-position: center left;
+  background-size: auto 24px;
+  height: 24px;
+  width: 100%;
+}
+
+.goa-floral-strip-sm {
+  background-image: url('/assets/019-group-59467-54-3485-1.svg');
+  background-repeat: repeat-x;
+  background-position: center left;
+  background-size: auto 16px;
+  height: 16px;
+  width: 100%;
+}
+
+/* ========== GRAIN & SCANLINES ========== */
+
+.subtle-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+  z-index: 2;
+}
+
+.subtle-scanline::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(167, 255, 79, 0.015) 2px,
+    rgba(167, 255, 79, 0.015) 4px
+  );
+  z-index: 2;
+}
+
+.tech-grid-pattern {
+  background-image:
+    linear-gradient(rgba(167, 255, 79, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167, 255, 79, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ========== HOLOGRAPHIC & GLASS LAYERS ========== */
+
+.holo-card-border {
+  position: relative;
+}
+
+.holo-card-border::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    var(--holo-angle, 135deg),
+    rgba(50, 199, 102, 0.6),
+    rgba(167, 255, 79, 0.8),
+    rgba(0, 212, 170, 0.5),
+    rgba(255, 107, 74, 0.4),
+    rgba(167, 255, 79, 0.8),
+    rgba(50, 199, 102, 0.6)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: holo-shimmer 8s linear infinite;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.glass-card {
+  background: rgba(11, 42, 31, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(167, 255, 79, 0.15);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(14, 70, 48, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.glass-badge {
+  background: rgba(7, 26, 20, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(167, 255, 79, 0.2);
+}
+
+/* ========== APPROVED STAMP ========== */
+
+.approved-stamp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border: 2px solid #059669;
+  outline: 1px dashed #059669;
+  outline-offset: 2px;
+  color: #047857;
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  transform: rotate(-10deg);
+  background: rgba(16, 185, 129, 0.08);
+  box-shadow: 0 0 0 1px rgba(5, 150, 105, 0.15);
+  user-select: none;
+}
+
+/* ========== LANYARD STRAP & SLEEVE ========== */
+
+.lanyard-strap {
+  background: linear-gradient(90deg, #111 0%, #222 50%, #111 100%);
+  background-size: 8px 8px;
+  background-image: repeating-linear-gradient(45deg, #181818, #181818 2px, #262626 2px, #262626 4px);
+  box-shadow: inset 1px 0 2px rgba(255,255,255,0.15), inset -1px 0 2px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.5);
+}
+
+.badge-sleeve {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+}
+
+.badge-gloss {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.05) 60%, transparent 100%);
+  border-radius: 20px 20px 0 0;
+  pointer-events: none;
+}
+
+/* ========== 3D CARD TILT PRESERVE ========== */
+
+.perspective-container {
+  perspective: 1000px;
+}
+
+.tilt-card {
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+}
+
+.tilt-card:hover {
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(167, 255, 79, 0.15);
+}
+
+/* ========== BUTTONS ========== */
+
+.btn-lime {
+  background: linear-gradient(135deg, #32C766 0%, #A7FF4F 100%);
+  color: #071A14;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  padding: 14px 28px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(167, 255, 79, 0.25);
+}
+
+.btn-lime:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 8px 30px rgba(167, 255, 79, 0.4), 0 0 40px rgba(50, 199, 102, 0.2);
+}
+
+.btn-glass {
+  background: rgba(14, 70, 48, 0.4);
+  color: #A7FF4F;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(167, 255, 79, 0.25);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.25s ease;
+}
+
+.btn-glass:hover {
+  background: rgba(14, 70, 48, 0.7);
+  border-color: #A7FF4F;
+  box-shadow: 0 0 20px rgba(167, 255, 79, 0.15);
+}
+
+/* ========== INPUTS ========== */
+
+.input-jungle {
+  background: rgba(7, 26, 20, 0.7);
+  border: 1px solid rgba(22, 122, 74, 0.4);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: #E0F0E4;
+  font-family: var(--font-body);
+  font-size: 15px;
+  transition: all 0.25s ease;
+  outline: none;
+  width: 100%;
+}
+
+.input-jungle:focus {
+  border-color: #A7FF4F;
+  background: rgba(11, 42, 31, 0.85);
+  box-shadow: 0 0 0 3px rgba(167, 255, 79, 0.15);
+}
+
+.input-jungle::placeholder {
+  color: rgba(167, 255, 79, 0.3);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* ========== BADGES ========== */
+
+.neo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+  border-radius: 2px;
+}
+
+.neo-badge-yellow { background: #FEE101; color: #000; }
+.neo-badge-pink { background: #FF0080; color: #FFF; }
+.neo-badge-lime { background: #A7FF4F; color: #000; }
+
+/* ========== KEYFRAMES & UTILITIES ========== */
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: 200%;
+  animation: marquee 25s linear infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.08); }
+}
+
+@keyframes holo-shimmer {
+  0% { --holo-angle: 0deg; }
+  100% { --holo-angle: 360deg; }
+}
+
+@keyframes spin-once {
+  0% { transform: rotate(0deg) scale(0.9); }
+  50% { transform: rotate(180deg) scale(1.15); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes pulse-lime-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(167, 255, 79, 0.4), 0 0 30px rgba(50, 199, 102, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(167, 255, 79, 0.7), 0 0 50px rgba(50, 199, 102, 0.4);
+  }
+}
+
+.animate-spin-once {
+  animation: spin-once 0.4s ease-out;
+}
+
+.animate-lime-pulse {
+  animation: pulse-lime-glow 3s infinite;
+}
+
+@property --holo-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* Custom Scrollbar for Template Picker */
+.template-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.template-scroll::-webkit-scrollbar-track {
+  background: rgba(7, 26, 20, 0.6);
+  border-radius: 9999px;
+}
+
+.template-scroll::-webkit-scrollbar-thumb {
+  background: rgba(167, 255, 79, 0.3);
+  border-radius: 9999px;
+}
+
+.template-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(167, 255, 79, 0.6);
+}
+
+/* Mobile Safe Area Inset Padding */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
