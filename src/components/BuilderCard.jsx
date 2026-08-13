@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { getTemplate } from '../data/templates';
-
+ 
 /**
  * Single Main Builder ID Pass Component (BuilderCard.jsx)
  * Displays the retro-futuristic Goa Hacker House ID card as a single unified pass.
  */
 export default function BuilderCard({ userData, templateId }) {
   const template = getTemplate(templateId);
-
+ 
   const name = (userData.name || 'RAVI KISHAN').toUpperCase();
   const stack = (userData.stack || 'FULL STACK DEVELOPER').toUpperCase();
   const title = (userData.builderTitle || 'THE SHIPPER').toUpperCase();
   const number = userData.builderNumber || '026';
-
+ 
   // 3D Card Tilt State
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
-
+ 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -26,11 +26,11 @@ export default function BuilderCard({ userData, templateId }) {
     const tiltY = (x - centerX) / 18;
     setTilt({ x: tiltX, y: tiltY });
   };
-
+ 
   const handleMouseLeave = () => {
     setTilt({ x: 0, y: 0 });
   };
-
+ 
   const handleTouchMove = (e) => {
     if (!e.touches || !e.touches[0]) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -43,11 +43,11 @@ export default function BuilderCard({ userData, templateId }) {
     const tiltY = (x - centerX) / 14;
     setTilt({ x: tiltX, y: tiltY });
   };
-
+ 
   const handleTouchEnd = () => {
     setTilt({ x: 0, y: 0 });
   };
-
+ 
   return (
     <div className="perspective-container w-full flex justify-center">
       <div
@@ -68,9 +68,10 @@ export default function BuilderCard({ userData, templateId }) {
             className="w-full h-full object-cover"
             style={{ filter: template.colors.bgOverlay || 'none' }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/85 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#083e2e]/55 via-[#167A4A]/22 to-[#071A14]/75 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#69d6b2]/6 via-transparent to-transparent mix-blend-overlay pointer-events-none" />
         </div>
-
+ 
         {/* 2. Palm Trees Tropical Visual Backdrop */}
         <img
           src="/assets/footer-trees.png"
@@ -82,7 +83,7 @@ export default function BuilderCard({ userData, templateId }) {
           alt="Palm Trees Right"
           className="absolute bottom-6 -right-8 w-36 sm:w-44 opacity-35 pointer-events-none z-0 object-contain scale-x-[-1]"
         />
-
+ 
         {/* 3. Top Header Overlay */}
         <div className="relative z-20 pt-3 px-3.5 sm:px-4 flex items-center justify-between">
           {/* Top Left: Hacker House Logo + Devanagari Hindi Text Overlay */}
@@ -100,14 +101,14 @@ export default function BuilderCard({ userData, templateId }) {
               />
             </div>
           </div>
-
+ 
           {/* Top Right: GOA, INDIA ✦ */}
           <div className="font-mono text-[9px] sm:text-[11px] font-black tracking-widest text-[#FEE101] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] flex items-center gap-1">
             <span>GOA, INDIA</span>
             <span className="text-[#FEE101] text-xs">✦</span>
           </div>
         </div>
-
+ 
         {/* 5. Top SVG Decorative Border Strip Asset */}
         <div className="relative z-20 mt-2 border-y border-black overflow-hidden flex shrink-0">
           <img
@@ -116,7 +117,7 @@ export default function BuilderCard({ userData, templateId }) {
             className="w-full h-4 sm:h-5 object-cover opacity-95"
           />
         </div>
-
+ 
         {/* 6. Main Center Pass Content (Side-by-side: Larger Photo Left, Details Table Right) */}
         <div className="relative z-20 flex-1 px-3.5 sm:px-4 py-2.5 sm:py-3.5 flex items-center gap-3 sm:gap-4 my-auto w-full">
           
@@ -138,7 +139,7 @@ export default function BuilderCard({ userData, templateId }) {
             )}
             <div className="absolute inset-0 border border-white/10 pointer-events-none rounded-xl" />
           </div>
-
+ 
           {/* Right Column: Details Table & details.png background graphic */}
           <div className="flex-1 min-w-0 flex flex-col justify-between space-y-1.5 text-left relative z-10">
             
@@ -148,7 +149,7 @@ export default function BuilderCard({ userData, templateId }) {
               alt="Details Graphic"
               className="absolute -right-3 -top-2 w-32 sm:w-40 opacity-30 pointer-events-none object-contain z-0 mix-blend-screen"
             />
-
+ 
             {/* Table / Grid Structure for Name, Title, Role */}
             <div className="relative z-10 space-y-1.5 bg-[#040F0B]/85 backdrop-blur-sm p-2 sm:p-2.5 rounded-xl border border-[#167A4A]/60 shadow-lg">
               
@@ -161,7 +162,7 @@ export default function BuilderCard({ userData, templateId }) {
                   {name}
                 </h2>
               </div>
-
+ 
               {/* BUILDER TITLE */}
               <div className="border-b border-[#167A4A]/40 pb-1">
                 <span className="font-mono text-[7.5px] sm:text-[8.5px] font-extrabold text-[#A7FF4F]/90 block tracking-wider uppercase">
@@ -171,7 +172,7 @@ export default function BuilderCard({ userData, templateId }) {
                   {title}
                 </span>
               </div>
-
+ 
               {/* ROLE / STACK */}
               <div>
                 <span className="font-mono text-[7.5px] sm:text-[8.5px] font-extrabold text-[#A7FF4F]/90 block tracking-wider uppercase">
@@ -182,7 +183,7 @@ export default function BuilderCard({ userData, templateId }) {
                 </span>
               </div>
             </div>
-
+ 
             {/* Rubber Stamp: APPROVED */}
             <div className="relative z-10 pt-0.5 flex justify-start">
               <div className="approved-stamp border-[#32C766] text-[#A7FF4F] bg-[#0B2A1F]/95 shadow-[0_0_12px_rgba(50,199,102,0.4)]">
@@ -191,11 +192,11 @@ export default function BuilderCard({ userData, templateId }) {
                 <span className="text-[4.5px] tracking-widest block leading-none text-[#32C766]">★ PASS #{number} ★</span>
               </div>
             </div>
-
+ 
           </div>
-
+ 
         </div>
-
+ 
         {/* 7. Bottom Card Content */}
         <div className="relative z-20 pb-2 px-3.5 sm:px-4 flex items-end justify-between shrink-0">
           {/* Bottom Left: Directional Signpost Banners */}
@@ -215,7 +216,7 @@ export default function BuilderCard({ userData, templateId }) {
               </div>
             </div>
           </div>
-
+ 
           {/* Bottom Right: Laptop & Table Scene Graphic (agenda.png) */}
           <div className="w-20 sm:w-24 relative pointer-events-none">
             <img
@@ -225,7 +226,7 @@ export default function BuilderCard({ userData, templateId }) {
             />
           </div>
         </div>
-
+ 
         {/* 8. Bottom SVG Pattern Border Strip Asset */}
         <div className="relative z-20 border-t border-black overflow-hidden flex shrink-0">
           <img
@@ -234,9 +235,10 @@ export default function BuilderCard({ userData, templateId }) {
             className="w-full h-4 sm:h-5 object-cover opacity-95"
           />
         </div>
-
+ 
       </div>
     </div>
   );
 }
-
+ 
+ 
