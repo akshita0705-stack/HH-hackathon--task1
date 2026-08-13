@@ -28,6 +28,13 @@ export async function exportBuilderCard(userData, templateId) {
         // Temporarily disable layout transforms, transitions and animations
         // so html2canvas captures a straight-on, stable preview.
         const prevStyles = new Map();
+        // html2canvas does NOT support the CSS `filter` property, so any
+        // template colour tint (hue-rotate/sepia/saturate on the background
+        // image) silently gets dropped from the exported PNG even though it
+        // renders fine on-screen. We work around this by pre-baking each
+        // filtered <img> into a plain (unfiltered) canvas image before the
+        // capture, then restoring the original element afterwards.
+        const filterRestores = [];
         try {
           const elems = node.querySelectorAll('*');
           elems.forEach((el) => {
@@ -42,13 +49,33 @@ export async function exportBuilderCard(userData, templateId) {
           });
           node.style.transform = 'none';
  
+          // Bake any CSS `filter` on <img> elements into their pixels so
+          // html2canvas captures the tinted colours correctly.
+          const filteredImgs = Array.from(node.querySelectorAll('img')).filter((img) => {
+            const computedFilter = window.getComputedStyle(img).filter;
+            return computedFilter && computedFilter !== 'none';
+          });
+          await Promise.all(filteredImgs.map(async (img) => {
+            try {
+              const rasterized = await rasterizeFilteredImage(img);
+              if (rasterized) {
+                filterRestores.push({ img, originalSrc: img.src, originalFilter: img.style.filter });
+                await setImageSrcAndWait(img, rasterized);
+                img.style.filter = 'none';
+              }
+            } catch (e) {
+              // If rasterizing fails for any single image, just leave it as-is
+              // (it will fall back to losing its tint, but export still proceeds).
+            }
+          }));
+ 
           // Ensure webfonts have loaded so canvas text matches the page exactly
           try {
             if (document.fonts && document.fonts.ready) await document.fonts.ready;
           } catch (e) {
             // ignore if document.fonts isn't supported
           }
-
+ 
           // Use the exact devicePixelRatio (don't floor) for pixel-perfect capture
           const scaleOption = (typeof window !== 'undefined' && window.devicePixelRatio) ? Math.max(1, window.devicePixelRatio) : 1;
           const canvas = await html2canvas.default(node, {
@@ -74,6 +101,10 @@ export async function exportBuilderCard(userData, templateId) {
             el.style.transition = vals.transition || '';
             el.style.animation = vals.animation || '';
           });
+          filterRestores.forEach(({ img, originalSrc, originalFilter }) => {
+            img.src = originalSrc;
+            img.style.filter = originalFilter || '';
+          });
  
           return;
         } catch (err) {
@@ -82,6 +113,10 @@ export async function exportBuilderCard(userData, templateId) {
             el.style.transform = vals.transform || '';
             el.style.transition = vals.transition || '';
             el.style.animation = vals.animation || '';
+          });
+          filterRestores.forEach(({ img, originalSrc, originalFilter }) => {
+            img.src = originalSrc;
+            img.style.filter = originalFilter || '';
           });
           throw err;
         }
@@ -168,9 +203,18 @@ export async function exportBuilderCard(userData, templateId) {
     loadImageFromUrl('/assets/details.png').catch(() => null),
   ]);
  
-  // 1. Draw Goa Beach Scene Background
+  // 1. Draw Goa Beach Scene Background (apply the template's colour tint,
+  // matching the CSS `filter` used in the live on-screen preview)
   if (bgImg) {
-    ctx.drawImage(bgImg, 0, 0, CARD_WIDTH, CARD_HEIGHT);
+    const overlayFilter = template.colors.bgOverlay;
+    if (overlayFilter && overlayFilter !== 'none' && typeof ctx.filter !== 'undefined') {
+      ctx.save();
+      ctx.filter = overlayFilter;
+      ctx.drawImage(bgImg, 0, 0, CARD_WIDTH, CARD_HEIGHT);
+      ctx.restore();
+    } else {
+      ctx.drawImage(bgImg, 0, 0, CARD_WIDTH, CARD_HEIGHT);
+    }
   } else {
     ctx.fillStyle = template.colors.bg || '#0E4630';
     ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
@@ -229,6 +273,66 @@ function loadImageFromUrl(url) {
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = url;
+  });
+}
+ 
+/**
+ * Draws an <img> element that has a CSS `filter` applied onto an offscreen
+ * canvas using the equivalent Canvas2D `ctx.filter`, and returns a PNG data
+ * URL with the tint "baked in" as real pixels. This lets html2canvas (which
+ * has no support for CSS filter) still produce a correctly-coloured export.
+ * @param {HTMLImageElement} imgEl
+ * @returns {Promise<string|null>} data URL, or null if there's nothing to bake
+ */
+async function rasterizeFilteredImage(imgEl) {
+  const cssFilter = window.getComputedStyle(imgEl).filter;
+  if (!cssFilter || cssFilter === 'none') return null;
+ 
+  // Make sure the image is actually loaded before we draw it
+  if (!imgEl.complete || imgEl.naturalWidth === 0) {
+    await new Promise((resolve, reject) => {
+      const onLoad = () => { cleanup(); resolve(); };
+      const onError = () => { cleanup(); reject(new Error('image failed to load')); };
+      const cleanup = () => {
+        imgEl.removeEventListener('load', onLoad);
+        imgEl.removeEventListener('error', onError);
+      };
+      imgEl.addEventListener('load', onLoad);
+      imgEl.addEventListener('error', onError);
+    });
+  }
+ 
+  const width = imgEl.naturalWidth || imgEl.width;
+  const height = imgEl.naturalHeight || imgEl.height;
+  if (!width || !height) return null;
+ 
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx || typeof ctx.filter === 'undefined') return null; // Canvas filter unsupported in this browser
+ 
+  ctx.filter = cssFilter;
+  ctx.drawImage(imgEl, 0, 0, width, height);
+  return canvas.toDataURL('image/png');
+}
+ 
+/**
+ * Swaps an <img>'s src and waits for it to finish loading before resolving.
+ * @param {HTMLImageElement} imgEl
+ * @param {string} newSrc
+ */
+function setImageSrcAndWait(imgEl, newSrc) {
+  return new Promise((resolve, reject) => {
+    const onLoad = () => { cleanup(); resolve(); };
+    const onError = () => { cleanup(); reject(new Error('image failed to load')); };
+    const cleanup = () => {
+      imgEl.removeEventListener('load', onLoad);
+      imgEl.removeEventListener('error', onError);
+    };
+    imgEl.addEventListener('load', onLoad);
+    imgEl.addEventListener('error', onError);
+    imgEl.src = newSrc;
   });
 }
  

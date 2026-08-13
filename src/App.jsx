@@ -7,7 +7,6 @@ import TemplateSelector from './components/TemplateSelector';
 import CardPreview from './components/CardPreview';
 import ExportButton from './components/ExportButton';
 import ShareButton from './components/ShareButton';
-import SignalIndicator from './components/SignalIndicator';
 import BeachBackground from './components/BeachBackground';
 import { generateBuilderTitle, generateBuilderNumber } from './utils/builderTitle';
  
@@ -149,7 +148,6 @@ export default function App() {
                 <span className="glass-badge px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-mono text-[#A7FF4F] hidden sm:inline-block">
                   GOA '26 IDENTITY
                 </span>
-                <SignalIndicator size="sm" />
               </div>
             </div>
           </header>
@@ -309,7 +307,6 @@ export default function App() {
                   />
                 </div>
               </div>
-              <SignalIndicator size="sm" />
             </div>
           </header>
  

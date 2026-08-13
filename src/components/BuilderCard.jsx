@@ -85,10 +85,10 @@ export default function BuilderCard({ userData, templateId }) {
         />
  
         {/* 3. Top Header Overlay */}
-        <div className="relative z-20 pt-3 px-3.5 sm:px-4 flex items-center justify-between">
+        <div className="relative z-20 pt-3 px-3.5 sm:px-4 flex items-center justify-between gap-2">
           {/* Top Left: Hacker House Logo + Devanagari Hindi Text Overlay */}
-          <div className="flex items-center">
-            <div className="relative">
+          <div className="flex items-center shrink-0">
+            <div className="relative pr-5 sm:pr-7">
               <img
                 src="/assets/hacker-house.png"
                 alt="HACKER HOUSE"
@@ -103,7 +103,7 @@ export default function BuilderCard({ userData, templateId }) {
           </div>
  
           {/* Top Right: GOA, INDIA ✦ */}
-          <div className="font-mono text-[9px] sm:text-[11px] font-black tracking-widest text-[#FEE101] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] flex items-center gap-1">
+          <div className="font-mono text-[8px] sm:text-[11px] font-black tracking-widest text-[#FEE101] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] flex items-center gap-1 shrink-0 whitespace-nowrap">
             <span>GOA, INDIA</span>
             <span className="text-[#FEE101] text-xs">✦</span>
           </div>

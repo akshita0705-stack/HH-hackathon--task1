@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import CardPreview from './CardPreview';
-import SignalIndicator from './SignalIndicator';
 import SparkleField from './SparkleField';
  
 /**
@@ -36,7 +35,7 @@ export default function Hero({ onUpload }) {
     builderNumber: '026',
     photoUrl: null,
   };
-
+ 
   // SparkleField component provides falling sparkles on the hero only
  
   return (
@@ -150,7 +149,6 @@ export default function Hero({ onUpload }) {
             <span className="glass-badge px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-mono text-[#A7FF4F]">
               GOA, INDIA ✦
             </span>
-            <SignalIndicator size="sm" />
           </div>
         </header>
       </div>
